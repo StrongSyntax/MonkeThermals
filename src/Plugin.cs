@@ -22,25 +22,21 @@ namespace Jet_Engine
 
         void Start()
         {
-            Debug.Log("[Monke Thermals] Start");
             Utilla.Events.GameInitialized += OnGameInitialized;
         }
 
         void OnDestroy()
         {
-            Debug.Log("[Monke Thermals] OnDestroy");
             Utilla.Events.GameInitialized -= OnGameInitialized;
         }
 
         void OnEnable()
         {
-            Debug.Log("[Monke Thermals] OnEnable");
             HarmonyPatches.ApplyHarmonyPatches();
         }
 
         void OnDisable()
         {
-            Debug.Log("[Monke Thermals] OnDisable");
             HarmonyPatches.RemoveHarmonyPatches();
         }
 
@@ -143,7 +139,6 @@ namespace Jet_Engine
             if (!gliderWindClone.activeSelf)
             {
                 gliderWindClone.SetActive(true);
-                Debug.Log("[Monke Thermals] Glider Wind Clone Activated");
             }
         }
 
@@ -152,23 +147,18 @@ namespace Jet_Engine
             if (gliderWindClone.activeSelf)
             {
                 gliderWindClone.SetActive(false);
-                Debug.Log("[Monke Thermals] Glider Wind Clone Deactivated");
             }
         }
 
         [ModdedGamemodeJoin]
         public void OnJoin(string gamemode)
         {
-            Debug.Log($"[Monke Thermals] Joined Modded Lobby: {gamemode}");
-            inRoom = true;
             inRoom = true;
         }
 
         [ModdedGamemodeLeave]
         public void OnLeave(string gamemode)
         {
-            Debug.Log($"[Monke Thermals] Left Modded Lobby: {gamemode}");
-            inRoom = false;
             inRoom = false;
         }
     }
