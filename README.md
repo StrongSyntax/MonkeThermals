@@ -3,7 +3,7 @@ A Gorilla Tag mod that gives you your own vertical air current!
 
 ## Controls:
 - Right Trigger:
->> Starts Updraft
+> Starts Updraft
 
 - Right Trigger Percentage (TO DO)
 > Increases Updraft Strength
