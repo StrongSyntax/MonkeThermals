@@ -1,6 +1,8 @@
 # MonkeThermals
 A Gorilla Tag mod that gives you your own vertical air current! (boost controls and variable air current strength coming soon)
 
+![Diving Save](/media/Diving_Save.gif)
+
 ## Controls:
 - Right Trigger:
 > Starts Updraft
