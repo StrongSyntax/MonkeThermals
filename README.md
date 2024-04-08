@@ -1,5 +1,5 @@
 # MonkeThermals
-A Gorilla Tag mod that gives you your own vertical air current!
+A Gorilla Tag mod that gives you your own vertical air current! (boost controls and variable air current strength coming soon)
 
 ## Controls:
 - Right Trigger:
