@@ -13,7 +13,6 @@ namespace Jet_Engine
     public class Plugin : BaseUnityPlugin
     {
         private bool inRoom;
-        private bool moddedLobby = false;
         private bool modDisabled = false;
 
         private GameObject gliderWindClone;
@@ -98,7 +97,7 @@ namespace Jet_Engine
             UpdateTargetPosition();
             float V = ControllerInputPoller.TriggerFloat(UnityEngine.XR.XRNode.RightHand);
 
-            if (moddedLobby && !modDisabled)
+            if (inRoom && !modDisabled)
             {
                 if (gliderWindClone == null)
                 {
@@ -161,7 +160,7 @@ namespace Jet_Engine
         public void OnJoin(string gamemode)
         {
             Debug.Log($"[Monke Thermals] Joined Modded Lobby: {gamemode}");
-            moddedLobby = true;
+            inRoom = true;
             inRoom = true;
         }
 
@@ -169,7 +168,7 @@ namespace Jet_Engine
         public void OnLeave(string gamemode)
         {
             Debug.Log($"[Monke Thermals] Left Modded Lobby: {gamemode}");
-            moddedLobby = false;
+            inRoom = false;
             inRoom = false;
         }
     }
