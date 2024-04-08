@@ -19,16 +19,22 @@ namespace Jet_Engine
         private float RightTriggerV; // Right Trigger variable
 
         private GameObject gliderWindClone; // Wind Stream Object
-        private float movementSpeed = 10.0f; // Adjust this value to control the speed of movement
+        private float movementSpeed = 10.0f; // Adjust this value to control the speed in which the wind follows the player
         
         private Vector3 vertOffset = new Vector3(-19f, -10f, -18f); // Updraft position offset
         private Vector3 boostPosOffset = new Vector3(-19f, -10f, -18f); // Boost position offset
-        private Quaternion boostRotOffset = new Quaternion(0f, 0f, 0f, 0f); // pseudocode
+        private Quaternion boostRotOffset = new Quaternion(0f, 90f, 0f, 0f); // pseudocode
         
         private Vector3 vertTargetPos; // Target Position (for the updraft) based on the Main Camera + the offset
         private Vector3 boostTargetPos; // Target Position (for the boost) based on the Main Camera + the offset
 
         private bool isBoosting = false;
+
+        private float defaultUpdraftStrength = gliderWind // need to find the variable for that strength
+
+        private float updraftStrength = 0f;
+
+        private float boostStrength = 0f;
 
         void Start()
         {
@@ -154,10 +160,12 @@ namespace Jet_Engine
                 if (RightTriggerV >= 0.05f)
                 {
                     UpdateVerticalTargetPosition(); // Move the updraft to the player pos + an offset
+                    UpdateUpdraftStrength(); // Update the strength of the updraft
                     ActivateVerticalGliderWindClone(); // Activate the object
                 }
                 else
                 {
+                    ResetUpdraftStrength();
                     DeactivateVerticalGliderWindClone();
                 }
             }
@@ -243,8 +251,51 @@ namespace Jet_Engine
         private IEnumerator BoostPlayer()
         {
             isBoosting = true;
+            ActivateBoostGliderWindClone();
+    
+            // Increase strength parameters gradually over time.
+            // This is just a pseudocode example.
+            for (float timer = 0; timer < 1.0f; timer += Time.deltaTime)
+            {
+                // Update strength based on timer, e.g., linearly increasing.
+                UpdateBoostStrength(timer);
+                yield return null;
+            }
+    
+            // Keep the boost active for 2 seconds.
+            yield return new WaitForSeconds(2);
+    
+            // Deactivate the boost and reset parameters.
+            DeactivateBoostGliderWindClone();
+            ResetBoostStrength(); // Implement this method to reset the strength to default.
+    
+            isBoosting = false;
+        }
 
-            
+        private void UpdateBoostStrength(float timer)
+        {
+            // Placeholder logic for updating boost strength.
+            // Replace this with actual implementation later.
+            boostStrength = timer; // Example: linearly increase the boost strength over time.
+        }
+
+        private void ResetUpdraftStrength()
+        {
+            // Placeholder logic for resetting updraft strength.
+            // Replace this with actual implementation later.
+            updraftStrength = 0; // Reset the updraft strength to zero or to some default value.
+        }
+        
+        private void UpdateUpdraftStrength()
+        {
+            // Placeholder logic for updating updraft strength.
+            // Replace this with actual implementation later.
+            updraftStrength = RightTriggerV * defaultUpdraftStrength; // Example calculation.
+        }
+
+        private void ResetBoostStrength()
+        {
+            boostStrength = 0;
         }
 
         [ModdedGamemodeJoin]
