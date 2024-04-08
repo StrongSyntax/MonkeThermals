@@ -15,10 +15,20 @@ namespace Jet_Engine
         private bool inRoom;
         private bool modDisabled = false;
 
-        private GameObject gliderWindClone;
+        private bool AButton; // A button variable
+        private float RightTriggerV; // Right Trigger variable
+
+        private GameObject gliderWindClone; // Wind Stream Object
         private float movementSpeed = 10.0f; // Adjust this value to control the speed of movement
-        private Vector3 offset = new Vector3(-19f, -10f, -18f); // Adjust these values as needed
-        Vector3 targetPos;
+        
+        private Vector3 vertOffset = new Vector3(-19f, -10f, -18f); // Updraft position offset
+        private Vector3 boostPosOffset = new Vector3(-19f, -10f, -18f); // Boost position offset
+        private Quaternion boostRotOffset = new Quaternion(0f, 0f, 0f, 0f); // pseudocode
+        
+        private Vector3 vertTargetPos; // Target Position (for the updraft) based on the Main Camera + the offset
+        private Vector3 boostTargetPos; // Target Position (for the boost) based on the Main Camera + the offset
+
+        private bool isBoosting = false;
 
         void Start()
         {
@@ -43,44 +53,77 @@ namespace Jet_Engine
         void OnGameInitialized(object sender, EventArgs e)
         {
             Debug.Log("[Monke Thermals] Game Initialized");
-            StartCoroutine(LoadAndCloneWindObject());
+            StartCoroutine(LoadAndCloneWindObjects()); // Begin the cloning sequence as soon as the game loads
         }
 
-        private IEnumerator LoadAndCloneWindObject()
+        private IEnumerator LoadAndCloneWindObjects()
         {
             Debug.Log("[Monke Thermals] Loading Skyjungle scene additively.");
-            yield return SceneManager.LoadSceneAsync("Skyjungle", LoadSceneMode.Additive);
+            yield return SceneManager.LoadSceneAsync("Skyjungle", LoadSceneMode.Additive); // Load the scene on top of the preexisting scene 'GorillaTag'
             Debug.Log("[Monke Thermals] Skyjungle scene loaded.");
 
-            CloneGliderWindObject();
+            CloneVerticalGliderWindObject(); // Clone the vertical object
+            CloneHorizontalBoostWindObject(); // Clone the boost object
+            
             Debug.Log("[Monke Thermals] Attempting to unload Skyjungle scene.");
 
-            yield return SceneManager.UnloadSceneAsync("Skyjungle");
+            yield return SceneManager.UnloadSceneAsync("Skyjungle"); // Unload the `Skyjungle` scene
             Debug.Log("[Monke Thermals] Skyjungle scene unloaded.");
         }
 
-        private void CloneGliderWindObject()
+        private void CloneVerticalGliderWindObject()
         {
-            GameObject windObject = GameObject.Find("skyjungle/SmallMap_OffCenter_Prefab_2/ForceVols_Thermals_Border_MidMap");
-            if (windObject != null)
+            GameObject vertWindObject = GameObject.Find("skyjungle/SmallMap_OffCenter_Prefab_2/ForceVols_Thermals_Border_MidMap");
+            
+            if (vertWindObject != null)
             {
-                gliderWindClone = Instantiate(windObject);
+                vertGliderWindClone = Instantiate(vertWindObject);
 
                 if (Camera.main != null)
                 {
                     // Set the position and rotation of the cloned object
-                    gliderWindClone.transform.position = Camera.main.transform.position;
-                    gliderWindClone.transform.localRotation = Camera.main.transform.localRotation;
+                    vertGliderWindClone.transform.position = Camera.main.transform.position;
+                    vertGliderWindClone.transform.localRotation = Camera.main.transform.localRotation;
                 }
                 else
                 {
                     Debug.LogError("[Monke Thermals] Main Camera not found!");
                 }
 
-                gliderWindClone.tag = "Glider Wind";
-                gliderWindClone.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f); // Adjust scale if necessary
-                gliderWindClone.SetActive(false);
-                Debug.Log("[Monke Thermals] Wind object cloned successfully.");
+                vertGliderWindClone.tag = "Vertical Wind";
+                vertGliderWindClone.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f); // Shrink the air stream
+                vertGliderWindClone.SetActive(false);
+                Debug.Log("[Monke Thermals] Vertical object cloned successfully.");
+            }
+            else
+            {
+                Debug.LogError("[Monke Thermals] Wind object not found in Skyjungle scene.");
+            }
+        }
+
+        private void CloneHorizontalBoostWindObject()
+        {
+            GameObject boostWindObject = GameObject.Find("skyjungle/SmallMap_OffCenter_Prefab_2/ForceVols_Thermals_Border_MidMap");
+            
+            if (boostWindObject != null)
+            {
+                boostWindClone = Instantiate(boostWindObject);
+
+                if (Camera.main != null)
+                {
+                    // Set the position and rotation of the cloned object
+                    boostWindClone.transform.position = Camera.main.transform.position;
+                    boostWindClone.transform.localRotation = Camera.main.rotation; // pseudocode
+                }
+                else
+                {
+                    Debug.LogError("[Monke Thermals] Main Camera not found!");
+                }
+
+                boostWindClone.tag = "Boost Wind";
+                boostWindClone.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f); // Shrink the air stream
+                boostWindClone.SetActive(false);
+                Debug.Log("[Monke Thermals] Boost object cloned successfully.");
             }
             else
             {
@@ -90,8 +133,8 @@ namespace Jet_Engine
 
         void Update()
         {
-            UpdateTargetPosition();
-            float V = ControllerInputPoller.TriggerFloat(UnityEngine.XR.XRNode.RightHand);
+            RightTriggerV = ControllerInputPoller.TriggerFloat(UnityEngine.XR.XRNode.RightHand);
+            AButton = ControllerInputPoller.A(UnityEngine.XR.XRNode.RightHand);
 
             if (inRoom && !modDisabled)
             {
@@ -101,28 +144,36 @@ namespace Jet_Engine
                     return;
                 }
 
-                if (V >= 0.05f)
+                //A Button Detection (Boost)
+                if (AButton = true && !isBoosting)
                 {
-                    ActivateGliderWindClone();
+                    StartCoroutine(BoostPlayer()); // boost the monkey lmao
+                }
+
+                // Right Trigger Detection
+                if (RightTriggerV >= 0.05f)
+                {
+                    UpdateVerticalTargetPosition(); // Move the updraft to the player pos + an offset
+                    ActivateVerticalGliderWindClone(); // Activate the object
                 }
                 else
                 {
-                    DeactivateGliderWindClone();
+                    DeactivateVerticalGliderWindClone();
                 }
             }
         }
 
-        private void UpdateTargetPosition()
+        private void UpdateVerticalTargetPosition()
         {
             if (Camera.main != null)
             {
                 if (gliderWindClone != null && gliderWindClone.activeSelf)
                 {
                     // Calculate the target position with offset
-                    Vector3 targetPosition = Camera.main.transform.position + offset;
+                    vertTargetPos = Camera.main.transform.position + vertOffset;
 
                     // Calculate new position using Lerp for smooth transition
-                    Vector3 newPosition = Vector3.Lerp(gliderWindClone.transform.position, targetPosition, Time.deltaTime * movementSpeed);
+                    Vector3 newPosition = Vector3.Lerp(vertGliderWindClone.transform.position, vertTargetPos, Time.deltaTime * movementSpeed);
 
                     // Set the new position
                     gliderWindClone.transform.position = newPosition;
@@ -134,20 +185,66 @@ namespace Jet_Engine
             }
         }
 
-        private void ActivateGliderWindClone()
+        private void ActivateVerticalGliderWindClone()
         {
-            if (!gliderWindClone.activeSelf)
+            if (!vertGliderWindClone.activeSelf)
             {
-                gliderWindClone.SetActive(true);
+                vertGliderWindClone.SetActive(true);
             }
         }
 
-        private void DeactivateGliderWindClone()
+        private void DeactivateVerticalGliderWindClone()
         {
-            if (gliderWindClone.activeSelf)
+            if (vertGliderWindClone.activeSelf)
             {
-                gliderWindClone.SetActive(false);
+                vertGliderWindClone.SetActive(false);
             }
+        }
+
+        private void UpdateBoostTargetPosition()
+        {
+            if (Camera.main != null)
+            {
+                if (boostWindClone != null && boostWindClone.activeSelf)
+                {
+                    // Calculate the target position with offset
+                    boostTargetPos = Camera.main.transform.position + boostPosOffset;
+                    boostTargetRot = Camera.main.rotation + boostRotOffset
+
+                    // Calculate new position using Lerp for smooth transition
+                    Vector3 newPosition = Vector3.Lerp(boostWindClone.transform.position, boostTargetPos, Time.deltaTime * movementSpeed);
+
+                    // Set the new position
+                    boostWindClone.transform.position = newPosition;
+                }
+            }
+            else
+            {
+                Debug.LogError("[Monke Thermals] Error: Main Camera not found!");
+            }
+        }
+
+        private void ActivateBoostGliderWindClone()
+        {
+            if (!boostWindClone.activeSelf)
+            {
+                boostWindClone.SetActive(true);
+            }
+        }
+
+        private void DeactivateBoostGliderWindClone()
+        {
+            if (boostWindClone.activeSelf)
+            {
+                boostWindClone.SetActive(false);
+            }
+        }
+
+        private IEnumerator BoostPlayer()
+        {
+            isBoosting = true;
+
+            
         }
 
         [ModdedGamemodeJoin]
